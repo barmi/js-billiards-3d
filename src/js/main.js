@@ -24,6 +24,38 @@ stage.controls.target.set(0, 0, 0);
 stage.controls.maxDistance = 6;
 stage.controls.minDistance = 0.6;
 
+// 카메라 모드: NORMAL ↔ TOP_DOWN ('V' 키로 토글).
+const CAMERA_NORMAL = { minPolar: 0, maxPolar: Math.PI * 0.49, distance: 1.5 };
+const CAMERA_TOPDOWN = { minPolar: 0.04, maxPolar: 0.25, distance: 3.2 };
+let cameraMode = 'normal';
+function applyCameraMode() {
+  const m = cameraMode === 'topdown' ? CAMERA_TOPDOWN : CAMERA_NORMAL;
+  stage.controls.minPolarAngle = m.minPolar;
+  stage.controls.maxPolarAngle = m.maxPolar;
+  // 카메라 거리 재설정 (target 유지).
+  const target = stage.controls.target;
+  const cam = stage.camera;
+  const dx = cam.position.x - target.x;
+  const dz = cam.position.z - target.z;
+  const horizDist = Math.hypot(dx, dz);
+  // 새 거리에 맞춰 카메라 위치 보정.
+  if (horizDist > 0.01) {
+    const scale = m.distance / Math.hypot(dx, cam.position.y - target.y, dz);
+    cam.position.set(
+      target.x + dx * scale,
+      target.y + (cam.position.y - target.y) * scale,
+      target.z + dz * scale,
+    );
+  }
+  stage.controls.update();
+}
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyV' && !e.repeat) {
+    cameraMode = cameraMode === 'normal' ? 'topdown' : 'normal';
+    applyCameraMode();
+  }
+});
+
 const physics = new PhysicsWorld();
 
 const table = new Table();
@@ -262,6 +294,6 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
+  <span style="opacity:.45">drag: aim · wheel: zoom · SPACE: power · V: top-down · R: reset spin</span>
 `;
 hud.appendChild(panel);
