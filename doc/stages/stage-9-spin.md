@@ -89,3 +89,23 @@ cannon-es에서 angularVelocity·Y(잉글리시)는 펠트와의 동마찰로 �
 - 무스핀(중심 타격) → 큐볼이 객체구와 정면 충돌 시 거의 정지 (운동량 전달).
 
 각 케이스는 시뮬레이션 후 큐볼 종착 위치/속도로 자동 검증.
+
+### 변경 요약
+- [src/js/main.js](../../src/js/main.js):
+  - `SPIN_TOP_GAIN=0.9`, `SPIN_SIDE_GAIN=0.6` 추가
+  - `onFire`에서 `impactPicker.getOffset()` 후 각속도 계산:
+    - 톱/백: 축 `(aim.z, 0, -aim.x)`, 크기 `offset.y · v/R · 0.9`
+    - 사이드: 축 `(0, 1, 0)`, 크기 `-offset.x · v/R · 0.6`
+  - 발사 후 `impactPicker.reset()`
+
+### 검증 결과 (자동, t=0.3s)
+같은 큐볼+1번공 시나리오(+x 8 m/s 풀파워):
+| 스핀 | cb 위치 vs 충돌점 | 거동 |
+|---|---|---|
+| topSpin (offsetY=+1) | x=+0.383 | **follow** (앞으로 가장 멀리) |
+| noSpin (offsetY=0) | x=+0.149 | 중간 (운동량 일부 잔존) |
+| backSpin (offsetY=-1) | x=**-0.126** | **draw** (오히려 후진) |
+
+스핀이 의도대로 동작함을 확인.
+
+→ **Stage 9 완료.** Stage 10(사운드) 진입.

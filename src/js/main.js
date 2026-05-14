@@ -132,6 +132,8 @@ const powerFill = powerPanel.querySelector('.power-fill');
 
 const SHOT_VELOCITY_MIN = 0.6;
 const SHOT_VELOCITY_MAX = 8.0;
+const SPIN_TOP_GAIN = 0.9;  // 톱/백스핀 게인 (1.0 = 순수 굴림 속도와 동일 ω)
+const SPIN_SIDE_GAIN = 0.6; // 사이드 잉글리시 게인
 
 const shot = new ShotController({
   canShoot,
@@ -145,6 +147,21 @@ const shot = new ShotController({
     const v = SHOT_VELOCITY_MIN + (SHOT_VELOCITY_MAX - SHOT_VELOCITY_MIN) * p;
     cueBall.body.wakeUp();
     cueBall.body.velocity.set(_aimDir.x * v, 0, _aimDir.z * v);
+
+    // 스핀: picker 오프셋 → 각속도.
+    //  - offsetY > 0 (톱) → aim 방향으로 굴리는 회전축 = (aim.z, 0, -aim.x)
+    //  - offsetX > 0 (오른쪽 잉글리시) → -Y 회전 (위에서 봤을 때 시계방향)
+    const off = impactPicker.getOffset();
+    const omega = v / BALL.RADIUS;
+    const topMag = off.y * omega * SPIN_TOP_GAIN;
+    const sideMag = -off.x * omega * SPIN_SIDE_GAIN;
+    cueBall.body.angularVelocity.set(
+      _aimDir.z * topMag,
+      sideMag,
+      -_aimDir.x * topMag,
+    );
+
+    impactPicker.reset();
     cueStick.pullback = 0;
     game.onShotFired();
   },
