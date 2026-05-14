@@ -44,3 +44,21 @@
 - 풀파워 브레이크 시: 큐 임팩트 → 다수의 공-공 사운드 → 쿠션·포켓 사운드.
 - 무한 반복 같은 버그 없음.
 - 모바일/사운드 차단 환경에서 에러 없이 무음으로 동작.
+
+### 변경 요약
+- 신규: [src/js/audio/SoundManager.js](../../src/js/audio/SoundManager.js).
+  - 4종 절차적 합성 버퍼 (ballBall, ballCushion, pocket, cueImpact).
+  - 각각 톤(2주파수 합) + 노이즈 + 지수감쇠 엔벨로프.
+  - `_play(key, volume)`로 BufferSource 1회성 재생, masterGain 0.6.
+- [src/js/main.js](../../src/js/main.js):
+  - SoundManager 인스턴스, 첫 pointerdown/keydown에서 init() + resume().
+  - beginContact 이벤트에서 공-공/공-쿠션 분기, 충돌 속도 기반 볼륨.
+  - handlePocketing에서 playPocket(), ShotController.onFire에서 playCueImpact().
+  - 임계 속도 0.2 m/s 이하는 사운드 생략 (잔류 운동 잡음 컷).
+
+### 검증 결과
+- 첫 키 입력 시 AudioContext state="running", sampleRate=44100, 4종 버퍼 생성 확인.
+- 4종 재생 호출 (`playBallBall/playBallCushion/playPocket/playCueImpact`) 모두 에러 없음.
+- 콘솔 에러 없음.
+
+→ **Stage 10 완료.** Stage 11 진입.

@@ -12,6 +12,7 @@ import { ShotController } from './controls/ShotController.js';
 import { Game, GameState } from './game/Game.js';
 import { GameHUD } from './ui/GameHUD.js';
 import { ImpactPicker } from './ui/ImpactPicker.js';
+import { SoundManager } from './audio/SoundManager.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
@@ -53,6 +54,17 @@ stage.add(aimLine.line);
 const gameHUD = new GameHUD(hud, { onNewGame: () => location.reload() });
 const impactPicker = new ImpactPicker(hud);
 
+const sound = new SoundManager();
+// 첫 사용자 입력에서 AudioContext 초기화/resume — autoplay 정책 회피.
+const initSound = () => {
+  sound.init();
+  sound.resume();
+  window.removeEventListener('pointerdown', initSound, true);
+  window.removeEventListener('keydown', initSound, true);
+};
+window.addEventListener('pointerdown', initSound, true);
+window.addEventListener('keydown', initSound, true);
+
 function respawnCueBall() {
   const hs = headSpot();
   cueBall.pocketed = false;
@@ -77,9 +89,30 @@ const game = new Game({
 });
 gameHUD.update(game);
 
-// cannon-es beginContact 이벤트를 게임으로 전달.
+// cannon-es beginContact 이벤트 → 게임 + 사운드.
+const _isCushionBody = (b) => table.cushionBodies.includes(b);
+const _ballOf = (body) => {
+  for (const b of balls) if (b.body === body) return b;
+  return null;
+};
 physics.world.addEventListener('beginContact', (e) => {
   game.trackContact(e.bodyA, e.bodyB);
+  const ballA = _ballOf(e.bodyA);
+  const ballB = _ballOf(e.bodyB);
+  if (ballA && ballB) {
+    // 공-공: 상대 속도 크기.
+    const dvx = ballA.body.velocity.x - ballB.body.velocity.x;
+    const dvy = ballA.body.velocity.y - ballB.body.velocity.y;
+    const dvz = ballA.body.velocity.z - ballB.body.velocity.z;
+    const rel = Math.hypot(dvx, dvy, dvz);
+    if (rel > 0.2) sound.playBallBall(rel);
+  } else if (ballA && _isCushionBody(e.bodyB)) {
+    const s = Math.hypot(ballA.body.velocity.x, ballA.body.velocity.y, ballA.body.velocity.z);
+    if (s > 0.2) sound.playBallCushion(s);
+  } else if (ballB && _isCushionBody(e.bodyA)) {
+    const s = Math.hypot(ballB.body.velocity.x, ballB.body.velocity.y, ballB.body.velocity.z);
+    if (s > 0.2) sound.playBallCushion(s);
+  }
 });
 
 const _aimDir = new THREE.Vector3();
@@ -163,6 +196,7 @@ const shot = new ShotController({
 
     impactPicker.reset();
     cueStick.pullback = 0;
+    sound.playCueImpact(p);
     game.onShotFired();
   },
 });
@@ -174,6 +208,7 @@ function handlePocketing() {
     if (!table.isInPocket(b.body.position)) continue;
     b.sink();
     game.onBallPocketed(b);
+    sound.playPocket();
     if (b === cueBall) {
       // 큐볼은 제거하지 않고 화면 아래로 격리. resolve 시 헤드 스팟에 재배치.
       setTimeout(() => {
@@ -220,7 +255,7 @@ stage.onUpdate((dt) => {
 
 stage.start();
 
-window.__demo = { cueBall, balls, physics, stage, cueStick, shot, game, impactPicker };
+window.__demo = { cueBall, balls, physics, stage, cueStick, shot, game, impactPicker, sound };
 
 const panel = document.createElement('div');
 panel.className = 'panel top-left';
