@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
 
-import { BALL, TABLE } from './config.js';
 import { Stage } from './scene/Stage.js';
 import { PhysicsWorld } from './physics/PhysicsWorld.js';
 import { Table } from './objects/Table.js';
+import { Ball } from './objects/Ball.js';
+import { rackPositions, headSpot } from './objects/rack.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
@@ -17,59 +17,35 @@ stage.controls.maxDistance = 8;
 
 const physics = new PhysicsWorld();
 
-// 시각 + 물리 모두 Table이 관리.
 const table = new Table();
 stage.add(table.group);
 table.addPhysics(physics);
 
-// 임시 공 — Phase 3.3에서 Ball 클래스 + 16개 랙으로 교체.
+// 공 16개: 큐볼 + 1~15.
 const balls = [];
 
-function spawnBall(x, z, color) {
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(BALL.RADIUS, 32, 16),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.08 }),
-  );
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  stage.add(mesh);
-
-  const body = new CANNON.Body({
-    mass: BALL.MASS,
-    shape: new CANNON.Sphere(BALL.RADIUS),
-    material: physics.materials.ball,
-    position: new CANNON.Vec3(x, BALL.RADIUS, z),
-    linearDamping: 0.4,
-    angularDamping: 0.4,
-  });
-  physics.addDynamic(body, mesh);
-
-  const b = { mesh, body, pocketed: false };
-  balls.push(b);
-  return b;
+function makeBall(number, x, z) {
+  const ball = new Ball(number, { x, z }, physics.materials);
+  stage.add(ball.mesh);
+  physics.addDynamic(ball.body, ball.mesh);
+  balls.push(ball);
+  return ball;
 }
 
-// 큐볼 + 표적구 4개.
-const FOOT_SPOT_X = TABLE.PLAY_WIDTH / 4;
-const HEAD_SPOT_X = -FOOT_SPOT_X;
+const headSpotPos = headSpot();
+const cueBall = makeBall(0, headSpotPos.x, headSpotPos.z);
+for (const spec of rackPositions()) {
+  makeBall(spec.number, spec.x, spec.z);
+}
 
-const cueBall = spawnBall(HEAD_SPOT_X, 0, 0xffffff);
-spawnBall(FOOT_SPOT_X, 0, 0xe6c200);
-spawnBall(FOOT_SPOT_X + 0.06, 0.035, 0x1e88e5);
-spawnBall(FOOT_SPOT_X + 0.06, -0.035, 0xd32f2f);
-spawnBall(FOOT_SPOT_X + 0.12, 0, 0x222222);
-
-// 큐볼에 강한 임펄스 → 표적구 충돌 → 쿠션 반사 → 포켓 시험.
-cueBall.body.velocity.set(3.5, 0, 0.1);
+// 데모용 브레이크 샷.
+cueBall.body.velocity.set(4.5, 0, 0.02);
 
 function handlePocketing() {
   for (const b of balls) {
     if (b.pocketed) continue;
     if (table.isInPocket(b.body.position)) {
-      b.pocketed = true;
-      // 빨려 내려가도록 아래로 살짝 가속, 그 후 제거.
-      b.body.velocity.set(0, -0.8, 0);
-      b.body.angularVelocity.set(0, 0, 0);
+      b.sink();
       setTimeout(() => {
         physics.remove(b.body);
         stage.remove(b.mesh);
@@ -90,7 +66,7 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 3 / Phase 3.2 — cushions &amp; pockets</span><br />
+  <span style="opacity:.65">Stage 3 / Phase 3.3 — 16-ball rack</span><br />
   <span style="opacity:.45">drag: rotate · wheel: zoom</span>
 `;
 hud.appendChild(panel);

@@ -67,9 +67,30 @@
 
 ---
 
-## Phase 3.3 — 16개 공 + 랙 (예정)
+## Phase 3.3 — 16개 공 + 표준 8볼 랙
 
-### 계획
-- `Ball` 클래스 (메시+바디+번호+그룹). 솔리드/스트라이프/큐/8볼 구분.
-- 표준 8볼 랙 위치 계산.
-- 공 색상/번호: 텍스처는 Phase 7에 미루고, 우선 단색 + 번호용 작은 흰 원 디스크로 식별.
+### 결정사항
+- `Ball` 클래스 ([src/js/objects/Ball.js](../../src/js/objects/Ball.js)) — number, kind(`CUE`/`SOLID`/`STRIPE`/`EIGHT`), mesh, body, sink() 메서드.
+- 스트라이프는 메시 자식으로 흰 띠(오픈 실린더) 추가. 메시 회전 따라 자연스럽게 굴림 표현. 번호/텍스처는 Stage 7에서.
+- 색상: 1~7 솔리드, 9~15는 동일 색 + 흰 띠. 8번은 검정.
+- 랙 패턴 ([src/js/objects/rack.js](../../src/js/objects/rack.js)):
+  ```
+  Row 0:        [1]              <- apex (foot spot)
+  Row 1:       [2][9]
+  Row 2:      [3][8][10]         <- 8볼은 행 2 중앙
+  Row 3:     [4][11][5][12]
+  Row 4:    [6][13][7][14][15]   <- 뒤 모서리: 6(솔리드) / 15(스트라이프)
+  ```
+  - 행 간격: √3·R, 행 내 인접 공 간격: 2R. 초기 침투 방지 EPS = 0.6%R.
+- 풋 스팟: x = +W/4, 헤드 스팟: x = -W/4 (표준).
+- Ball.body는 `allowSleep`, `sleepSpeedLimit`/`sleepTimeLimit` 설정 — 정지한 공의 CPU 절약.
+
+### 변경 요약
+- 신규: [src/js/objects/Ball.js](../../src/js/objects/Ball.js), [src/js/objects/rack.js](../../src/js/objects/rack.js).
+- [src/js/main.js](../../src/js/main.js): 임시 표적구 제거 → Ball 인스턴스로 큐볼 + 15개 랙. 큐볼에 (4.5, 0, 0.02) 초기 속도로 브레이크 데모.
+
+### 검증
+- 브레이크 후 16개 공이 모두 정상 분산. 스트라이프 흰 띠 확인. 공-공 충돌, 공-쿠션 반사 자연스러움.
+- 콘솔 에러 없음.
+
+→ **Stage 3 완료.** Stage 4 진입 — 큐 스틱 + 샷 메커닉.
