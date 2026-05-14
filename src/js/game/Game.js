@@ -10,6 +10,7 @@ export const GameState = {
   WAITING_FOR_BREAK:  'waiting_for_break',
   SHOT_IN_PROGRESS:   'shot_in_progress',
   WAITING_FOR_SHOT:   'waiting_for_shot',
+  BALL_IN_HAND:       'ball_in_hand',
   GAME_OVER:          'game_over',
 };
 
@@ -48,6 +49,13 @@ export class Game {
   isPlayable() {
     return this.state === GameState.WAITING_FOR_BREAK
         || this.state === GameState.WAITING_FOR_SHOT;
+  }
+
+  // Ball-in-hand 배치 확정 → 정상 샷 대기 상태로 전이.
+  confirmBallPlacement() {
+    if (this.state !== GameState.BALL_IN_HAND) return;
+    this.state = GameState.WAITING_FOR_SHOT;
+    if (this.hooks.onResolve) this.hooks.onResolve(this, null);
   }
 
   groupOf(player) { return this.playerGroups[player]; }
@@ -213,7 +221,8 @@ export class Game {
       if (turnPass) {
         this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
       }
-      this.state = GameState.WAITING_FOR_SHOT;
+      // 파울이면 ball-in-hand, 아니면 일반 샷 대기.
+      this.state = foul ? GameState.BALL_IN_HAND : GameState.WAITING_FOR_SHOT;
     }
 
     const summary = {

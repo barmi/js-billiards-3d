@@ -53,6 +53,12 @@ export class GameHUD {
     this.p1Score.textContent = game.scores[1].length ? game.scores[1].join(' · ') : '—';
     this.p2Score.textContent = game.scores[2].length ? game.scores[2].join(' · ') : '—';
 
+    const inHand = game.state === 'ball_in_hand';
+    this.el.classList.toggle('ball-in-hand', inHand);
+    if (inHand) {
+      this.eventText.textContent = `Ball in hand — move mouse, click to place`;
+    }
+
     if (game.winner) {
       this.showGameOver(game.winner);
     }

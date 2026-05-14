@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { BALL, PHYSICS } from './config.js';
+import { BALL, PHYSICS, TABLE } from './config.js';
 import { Stage } from './scene/Stage.js';
 import { PhysicsWorld } from './physics/PhysicsWorld.js';
 import { Table } from './objects/Table.js';
@@ -165,6 +165,62 @@ function canShoot() {
   if (!game.isPlayable()) return false;
   return physics.isAllAtRest();
 }
+
+// Ball-in-hand 입력 처리.
+const _raycaster = new THREE.Raycaster();
+const _mouseNdc = new THREE.Vector2();
+function tryPlaceCueBall(clientX, clientY) {
+  if (game.state !== GameState.BALL_IN_HAND) return false;
+  const canvas = stage.renderer.domElement;
+  const rect = canvas.getBoundingClientRect();
+  _mouseNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  _mouseNdc.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+  _raycaster.setFromCamera(_mouseNdc, stage.camera);
+  const hits = _raycaster.intersectObject(table.bed, false);
+  if (hits.length === 0) return false;
+  const p = hits[0].point;
+  const W = TABLE.PLAY_WIDTH / 2 - BALL.RADIUS;
+  const H = TABLE.PLAY_HEIGHT / 2 - BALL.RADIUS;
+  const cx = Math.max(-W, Math.min(W, p.x));
+  const cz = Math.max(-H, Math.min(H, p.z));
+  // 다른 공과 겹치면 이동 거부.
+  for (const b of balls) {
+    if (b === cueBall || b.pocketed) continue;
+    const dx = cx - b.body.position.x;
+    const dz = cz - b.body.position.z;
+    if (dx * dx + dz * dz < (2 * BALL.RADIUS) ** 2 * 1.05) return false;
+  }
+  cueBall.pocketed = false;
+  cueBall.mesh.visible = true;
+  cueBall.body.position.set(cx, BALL.RADIUS, cz);
+  cueBall.body.velocity.set(0, 0, 0);
+  cueBall.body.angularVelocity.set(0, 0, 0);
+  cueBall.body.wakeUp();
+  return true;
+}
+
+window.addEventListener('mousemove', (e) => {
+  if (game.state === GameState.BALL_IN_HAND) {
+    tryPlaceCueBall(e.clientX, e.clientY);
+  }
+});
+// 클릭으로 위치 확정 (드래그 없는 클릭만 — OrbitControls와 공존).
+let _mouseDownAt = null;
+stage.renderer.domElement.addEventListener('mousedown', (e) => {
+  _mouseDownAt = { x: e.clientX, y: e.clientY };
+});
+stage.renderer.domElement.addEventListener('mouseup', (e) => {
+  if (!_mouseDownAt) return;
+  const dx = e.clientX - _mouseDownAt.x;
+  const dy = e.clientY - _mouseDownAt.y;
+  const isClick = Math.hypot(dx, dy) < 4;
+  _mouseDownAt = null;
+  if (isClick && game.state === GameState.BALL_IN_HAND) {
+    if (tryPlaceCueBall(e.clientX, e.clientY)) {
+      game.confirmBallPlacement();
+    }
+  }
+});
 
 function updateAim() {
   if (!canShoot()) {

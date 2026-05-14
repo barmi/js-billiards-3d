@@ -147,6 +147,15 @@ html, body {
   color: rgba(255, 220, 180, 0.85);
 }
 
+#hud .game-hud.ball-in-hand {
+  border-color: rgba(78, 158, 255, 0.7);
+  box-shadow: 0 0 0 1px rgba(78, 158, 255, 0.35);
+}
+#hud .game-hud.ball-in-hand .event-text {
+  color: #82b8ff;
+  font-weight: 600;
+}
+
 #hud .game-over-overlay {
   position: fixed;
   inset: 0;
