@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-import { BALL } from '../config.js';
+import { BALL, PHYSICS } from '../config.js';
 
 export const BallGroup = {
   CUE: 'cue',
@@ -71,6 +71,9 @@ export class Ball {
       sleepSpeedLimit: 0.02,
       sleepTimeLimit: 0.4,
     });
+    // CCD: 빠른 공이 쿠션을 뚫고 나가지 않게.
+    this.body.ccdSpeedThreshold = PHYSICS.CCD_SPEED_THRESHOLD;
+    this.body.ccdSweptSphereRadius = BALL.RADIUS;
   }
 
   // 포켓 진입 시 호출 — 빨려 내려가는 가속.

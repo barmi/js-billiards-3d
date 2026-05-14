@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-import { TABLE, POCKET } from '../config.js';
+import { TABLE, POCKET, PHYSICS } from '../config.js';
 
 const FELT_COLOR = 0x1f7a3e;
 const RAIL_COLOR = 0x3b2516;
@@ -152,7 +152,6 @@ export class Table {
 
   // 베드 + 6 쿠션 바디를 물리 월드에 등록.
   addPhysics(physics) {
-    // 베드: 무한 평면. 펠트 머티리얼.
     const bed = new CANNON.Body({
       mass: 0,
       shape: new CANNON.Plane(),
@@ -162,16 +161,64 @@ export class Table {
     physics.addStatic(bed);
     this.bedBody = bed;
 
-    // 쿠션 6 조각. 박스 콜라이더, 쿠션 머티리얼.
+    // 쿠션 6 조각 — 시각 두께(CUSHION_DEPTH)는 그대로지만 콜라이더는 외측으로 두껍게(터널링 방지).
+    // 정면(플레이 영역 향한 면)을 시각과 같은 z=±H/2 또는 x=±W/2에 맞추고, 바깥으로만 확장.
+    const W = TABLE.PLAY_WIDTH;
+    const H = TABLE.PLAY_HEIGHT;
+    const colDepth = PHYSICS.CUSHION_COLLIDER_DEPTH;
+    const visDepth = TABLE.CUSHION_DEPTH;
+    const colDelta = (colDepth - visDepth) / 2; // 콜라이더 중심을 바깥으로 옮기는 양
+
     for (const s of this._cushionSegments()) {
+      // 시각 세그먼트가 긴 변에 있는가(z 방향으로 두께) vs 짧은 변에 있는가(x 방향으로 두께) 판별.
+      const isLongRail = Math.abs(s.z) > Math.abs(s.x);
+      let halfW = s.w / 2;
+      let halfD = s.d / 2;
+      let cx = s.x;
+      let cz = s.z;
+
+      if (isLongRail) {
+        // 박스의 z(depth) 방향으로 확장. 안쪽 면(±H/2)은 그대로, 바깥으로만 늘림.
+        halfD = colDepth / 2;
+        const outwardSign = Math.sign(s.z); // +z면 +방향(바깥), -z면 -방향(바깥)
+        cz = outwardSign * (H / 2 + colDepth / 2);
+      } else {
+        halfW = colDepth / 2;
+        const outwardSign = Math.sign(s.x);
+        cx = outwardSign * (W / 2 + colDepth / 2);
+      }
+
       const body = new CANNON.Body({
         mass: 0,
-        shape: new CANNON.Box(new CANNON.Vec3(s.w / 2, s.h / 2, s.d / 2)),
+        shape: new CANNON.Box(new CANNON.Vec3(halfW, s.h / 2, halfD)),
         material: physics.materials.cushion,
-        position: new CANNON.Vec3(s.x, s.y, s.z),
+        position: new CANNON.Vec3(cx, s.y, cz),
       });
       physics.addStatic(body);
       this.cushionBodies.push(body);
+    }
+
+    // 베드 외곽 안전망: 어쩌다 콜라이더 사이로 빠진 공을 받아내는 큰 벽 4개.
+    // 쿠션 콜라이더 뒤쪽으로 0.2m 떨어진 위치에 배치. 일반적으론 닿지 않음.
+    const safetyMat = physics.materials.cushion;
+    const safetyDist = colDepth + 0.2;
+    const safetyShape = (vx, vy, vz) => new CANNON.Box(new CANNON.Vec3(vx, vy, vz));
+    const safetyBodies = [
+      // 짧은 변 외측 벽 (x=±)
+      { pos: [-(W / 2 + safetyDist), 0.05, 0], shape: safetyShape(0.02, 0.5, H) },
+      { pos: [+(W / 2 + safetyDist), 0.05, 0], shape: safetyShape(0.02, 0.5, H) },
+      // 긴 변 외측 벽 (z=±)
+      { pos: [0, 0.05, -(H / 2 + safetyDist)], shape: safetyShape(W, 0.5, 0.02) },
+      { pos: [0, 0.05, +(H / 2 + safetyDist)], shape: safetyShape(W, 0.5, 0.02) },
+    ];
+    for (const s of safetyBodies) {
+      const body = new CANNON.Body({
+        mass: 0,
+        shape: s.shape,
+        material: safetyMat,
+        position: new CANNON.Vec3(...s.pos),
+      });
+      physics.addStatic(body);
     }
   }
 

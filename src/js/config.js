@@ -26,12 +26,17 @@ export const POCKET = {
 
 export const PHYSICS = {
   GRAVITY: -9.81,             // m/s^2
-  TIMESTEP: 1 / 60,           // 60Hz 고정 스텝
-  MAX_SUBSTEPS: 4,
-  FELT_FRICTION: 0.2,         // 공-펠트 동마찰
-  CUSHION_RESTITUTION: 0.85,  // 쿠션 반발
-  BALL_RESTITUTION: 0.95,     // 공-공 반발
-  REST_VELOCITY: 0.01,        // 이 속도 미만이면 정지로 간주 (m/s)
+  // 240Hz 고정 스텝. 풀파워 8m/s 공이 한 스텝에 0.033m → 쿠션 두께 미만이므로 터널링 방지.
+  TIMESTEP: 1 / 240,
+  MAX_SUBSTEPS: 8,
+  FELT_FRICTION: 0.2,
+  CUSHION_RESTITUTION: 0.85,
+  BALL_RESTITUTION: 0.95,
+  REST_VELOCITY: 0.03,        // 정지 판정 임계 (m/s). 너무 낮으면 잔류 운동에 오래 기다림.
+  // 콜라이더 두께(외측 방향) — 시각 메시는 CUSHION_DEPTH 그대로, 콜라이더만 두껍게.
+  CUSHION_COLLIDER_DEPTH: 0.30,
+  // cannon-es CCD 파라미터.
+  CCD_SPEED_THRESHOLD: 0.5,
 };
 
 export const SCENE = {
