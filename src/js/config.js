@@ -2,10 +2,14 @@
 // 출처: WPA(World Pool-Billiard Association) 9피트 풀 테이블 표준, 표준 2.25" 풀볼.
 
 export const TABLE = {
-  PLAY_WIDTH: 2.54,           // 플레이 표면 긴 변 (m)
-  PLAY_HEIGHT: 1.27,          // 플레이 표면 짧은 변 (m)
-  CUSHION_NOSE_HEIGHT: 0.037, // 베드 위 쿠션 노즈 높이 (m)
-  RAIL_WIDTH: 0.12,           // 레일 폭 (m, 시각화용 근사)
+  PLAY_WIDTH: 2.54,           // 플레이 표면 긴 변, x축 (m)
+  PLAY_HEIGHT: 1.27,          // 플레이 표면 짧은 변, z축 (m)
+  CUSHION_NOSE_HEIGHT: 0.037, // 베드 위 쿠션 윗면 (m)
+  CUSHION_DEPTH: 0.04,        // 쿠션 깊이, 안쪽 방향 돌출 (m)
+  RAIL_WIDTH: 0.12,           // 레일 폭 (m)
+  RAIL_HEIGHT: 0.06,          // 베드 위 레일 높이 (m, 쿠션보다 높음)
+  POCKET_CORNER_CUT: 0.085,   // 코너에서 쿠션 끝까지 거리 (m)
+  POCKET_SIDE_CUT: 0.075,     // 사이드 포켓에서 쿠션 끝까지 (m)
   BED_THICKNESS: 0.025,       // 베드 두께 (m, 시각화용)
   BED_HEIGHT: 0.78,           // 바닥에서 베드 윗면까지 (m, 시각화용)
 };
