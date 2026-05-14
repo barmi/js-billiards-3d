@@ -6,6 +6,7 @@ import { PhysicsWorld } from './physics/PhysicsWorld.js';
 import { Table } from './objects/Table.js';
 import { Ball } from './objects/Ball.js';
 import { CueStick } from './objects/CueStick.js';
+import { AimLine } from './objects/AimLine.js';
 import { rackPositions, headSpot } from './objects/rack.js';
 import { ShotController } from './controls/ShotController.js';
 import { Game, GameState } from './game/Game.js';
@@ -44,6 +45,9 @@ for (const spec of rackPositions()) {
 
 const cueStick = new CueStick();
 stage.add(cueStick.mesh);
+
+const aimLine = new AimLine();
+stage.add(aimLine.line);
 
 const gameHUD = new GameHUD(hud, { onNewGame: () => location.reload() });
 
@@ -98,15 +102,23 @@ function canShoot() {
 function updateAim() {
   if (!canShoot()) {
     cueStick.setVisible(false);
+    aimLine.setVisible(false);
     return;
   }
   stage.controls.target.set(cueBall.body.position.x, BALL.RADIUS, cueBall.body.position.z);
   if (!refreshAimDir()) {
     cueStick.setVisible(false);
+    aimLine.setVisible(false);
     return;
   }
   cueStick.aim(cueBall.body.position, _aimDir);
   cueStick.setVisible(true);
+  aimLine.update(
+    { x: cueBall.body.position.x, z: cueBall.body.position.z },
+    _aimDir,
+    balls.filter((b) => b !== cueBall),
+  );
+  aimLine.setVisible(true);
 }
 
 // 파워 게이지 HUD.
@@ -180,7 +192,7 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 5 / Phase 5.3 — 8-ball win/loss</span><br />
+  <span style="opacity:.65">Stage 6 / Phase 6.1 — aim assist</span><br />
   <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);
