@@ -60,12 +60,21 @@ function respawnCueBall() {
 const game = new Game({
   cueBall,
   balls,
+  table,
   hooks: {
     onCueRespawn: respawnCueBall,
-    onResolve: (g) => gameHUD.update(g),
+    onResolve: (g, summary) => {
+      gameHUD.update(g);
+      gameHUD.showShotSummary(summary);
+    },
   },
 });
 gameHUD.update(game);
+
+// cannon-es beginContact 이벤트를 게임으로 전달.
+physics.world.addEventListener('beginContact', (e) => {
+  game.trackContact(e.bodyA, e.bodyB);
+});
 
 const _aimDir = new THREE.Vector3();
 
@@ -171,7 +180,7 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 5 / Phase 5.1 — turns &amp; scratch</span><br />
+  <span style="opacity:.65">Stage 5 / Phase 5.2 — groups &amp; legal shot</span><br />
   <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);

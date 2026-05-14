@@ -42,15 +42,34 @@
 
 ---
 
-## Phase 5.2 — 그룹 할당 + 합법적 샷 (예정)
+## Phase 5.2 — 그룹 할당 + 합법적 샷
 
-### 계획
-- cannon-es 콘택트 이벤트로 첫 ball-ball 콘택트 추적.
-- 레일 콘택트 추적 (공-쿠션 첫 접촉).
-- 그룹 할당: 브레이크 이후 첫 합법 포켓의 그룹 = 슈터 그룹.
-- 합법적 샷 판정:
-  - 큐볼이 자기 그룹 공을 먼저 쳐야 함 (또는 open table)
-  - 최소 1개 공이 레일에 닿거나, 1개 공이 포켓되어야 함
+### 결정사항
+- 콘택트 추적: `physics.world.addEventListener('beginContact', ...)`로 ball-ball, ball-cushion 콘택트를 `game.trackContact(bodyA, bodyB)`로 전달.
+- `_shotFirstContact`: 큐볼이 처음 친 객체구. 한 번만 설정.
+- `_railHitAfterContact`: 첫 ball-ball 콘택트 이후 공-쿠션 접촉이 있었는가.
+- 그룹 할당: 브레이크가 아닌 첫 비-파울 객체구 포켓 시점. 슈터에게 그 공의 그룹을, 상대에겐 반대 그룹 자동 할당. 8볼은 그룹 할당에 영향 없음.
+- 파울 판정 (브레이크 외 일반 샷):
+  - 큐볼 스크래치
+  - `_shotFirstContact === null` (어떤 공도 못 침)
+  - 자기 그룹 할당된 후 다른 그룹을 먼저 침
+  - open table에서 8볼을 먼저 침
+  - 객체구 포켓도 없고 첫 콘택트 후 쿠션도 안 닿음
+- 브레이크 파울: 어떤 공도 못 침 (간소 룰; BCA의 "4개 이상 쿠션 닿거나 1개 포켓" 정밀 규정은 생략).
+- HUD에 그룹 배지(P1/P2 옆 S/St) + 최근 샷 요약 문구 추가.
+
+### 변경 요약
+- [src/js/game/Game.js](../../src/js/game/Game.js): Group enum, `playerGroups`, `_shotFirstContact`, `_railHitAfterContact`, `trackContact()`, 파울 판정 및 그룹 할당 로직, resolveShot summary 객체 반환.
+- [src/js/ui/GameHUD.js](../../src/js/ui/GameHUD.js): 그룹 배지(S/St), 이벤트 메시지 행. `showShotSummary(summary)` 메서드.
+- [src/js/main.js](../../src/js/main.js): Game 생성자에 `table` 전달, `physics.world.beginContact` → `game.trackContact` 와이어업.
+- [src/css/style.css](../../src/css/style.css): `.group-badge`, `.event-row` 스타일.
+
+### 검증 (시뮬레이션)
+- 브레이크 후 정렬된 카메라로 풀파워 샷 → "Break · Turn passed" (콘택트 정상, 포켓 없음).
+- P2가 ball 1(solid) 포켓 → `playerGroups = {1: stripe, 2: solid}`, P2가 ball 1 스코어 보유, 턴 유지.
+- P2가 ball 9(stripe) 우선 콘택트 → "Foul: wrong group · Turn passed".
+
+→ Phase 5.3 진입.
 
 ---
 

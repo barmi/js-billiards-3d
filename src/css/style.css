@@ -116,3 +116,33 @@ html, body {
 #hud .game-hud .score {
   font-variant-numeric: tabular-nums;
 }
+
+#hud .game-hud .group-badge {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#hud .game-hud .group-badge:empty {
+  display: none;
+}
+
+#hud .game-hud .group-badge.solid {
+  background: #f1c40f;
+  color: #1c1c1c;
+}
+
+#hud .game-hud .group-badge.stripe {
+  background: #ffffff;
+  color: #1c1c1c;
+}
+
+#hud .game-hud .event-row {
+  margin-top: 6px;
+  min-height: 16px;
+  font-size: 11px;
+  color: rgba(255, 220, 180, 0.85);
+}
