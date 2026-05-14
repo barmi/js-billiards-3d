@@ -44,12 +44,26 @@
 
 ---
 
-## Phase 3.2 — 물리 콜라이더 + 포켓 (예정)
+## Phase 3.2 — 물리 콜라이더 + 포켓 진입 판정
 
-### 계획
-- 임시 평면 제거 → 베드용 `CANNON.Plane` (혹은 큰 박스).
-- 쿠션 6 조각 각각에 `CANNON.Box` 콜라이더, `physics.materials.cushion` 적용.
-- 포켓 6개: 센서 바디(`collisionResponse=false`) + 진입 이벤트로 공 제거.
+### 결정사항
+- 쿠션 세그먼트 데이터를 `Table._cushionSegments()`로 한 곳에 모아 시각·물리가 공유. 메시 6개와 콜라이더 6개가 같은 형상/위치를 사용.
+- 베드는 `CANNON.Plane` (무한 평면) 그대로 — 포켓 컷아웃을 베드에 만들 필요 없음. 공이 포켓 반경 안으로 들어오면 코드로 "포켓됨" 처리하기 때문.
+- 포켓 검출: 매 스텝 `table.isInPocket(body.position)`을 호출. 진입 시 속도 (0,-0.8,0) + angularVelocity=0, 350ms 뒤 body/mesh 제거. 센서 바디 + beginContact 이벤트 대비 단순.
+- 사이즈 정합: 콜라이더 박스 half-extent는 메시 BoxGeometry의 절반. `CUSHION_DEPTH`/`POCKET_CORNER_CUT`/`POCKET_SIDE_CUT` 한 곳에서 관리.
+
+### 변경 요약
+- [src/js/objects/Table.js](../../src/js/objects/Table.js): `addPhysics(physics)` 추가 — 베드 평면 + 6 쿠션 박스를 물리 월드에 등록. `isInPocket(position)` 헬퍼.
+- [src/js/main.js](../../src/js/main.js):
+  - 임시 ground 평면 제거, 대신 `table.addPhysics(physics)` 호출.
+  - 데모용 표적구 4개 추가, 큐볼에 초기 속도(3.5, 0, 0.1) 부여.
+  - `handlePocketing()` 루프 — 포켓 진입 시 가라앉히고 350ms 뒤 제거.
+
+### 검증
+- 공이 쿠션에 부딪혀 반사 (이전 평면 시점에는 끝없이 굴러나갔음).
+- 콘솔 에러 없음. 60fps 유지.
+
+→ Phase 3.3 진입 — 임시 공을 정식 16개 랙으로 교체.
 
 ---
 
