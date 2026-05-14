@@ -195,3 +195,57 @@ html, body {
 #hud .game-over-overlay .new-game-btn:hover {
   background: rgba(78, 158, 255, 0.32);
 }
+
+#hud .impact-picker {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: 92px;
+  height: 92px;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+#hud .impact-picker .impact-ball {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #ffffff 0%, #d4d2cc 55%, #8d8a82 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+#hud .impact-picker .impact-cross-h,
+#hud .impact-picker .impact-cross-v {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+#hud .impact-picker .impact-cross-h { left: 12%; right: 12%; top: 50%; height: 1px; transform: translateY(-0.5px); }
+#hud .impact-picker .impact-cross-v { top: 12%; bottom: 12%; left: 50%; width: 1px; transform: translateX(-0.5px); }
+
+#hud .impact-picker .impact-dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e74c3c;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: left 0.05s linear, top 0.05s linear;
+}
+
+#hud .impact-picker .impact-label {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(230, 230, 230, 0.7);
+  pointer-events: none;
+}

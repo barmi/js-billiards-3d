@@ -11,6 +11,7 @@ import { rackPositions, headSpot } from './objects/rack.js';
 import { ShotController } from './controls/ShotController.js';
 import { Game, GameState } from './game/Game.js';
 import { GameHUD } from './ui/GameHUD.js';
+import { ImpactPicker } from './ui/ImpactPicker.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
@@ -50,6 +51,7 @@ const aimLine = new AimLine();
 stage.add(aimLine.line);
 
 const gameHUD = new GameHUD(hud, { onNewGame: () => location.reload() });
+const impactPicker = new ImpactPicker(hud);
 
 function respawnCueBall() {
   const hs = headSpot();
@@ -201,7 +203,7 @@ stage.onUpdate((dt) => {
 
 stage.start();
 
-window.__demo = { cueBall, balls, physics, stage, cueStick, shot, game };
+window.__demo = { cueBall, balls, physics, stage, cueStick, shot, game, impactPicker };
 
 const panel = document.createElement('div');
 panel.className = 'panel top-left';

@@ -62,6 +62,16 @@ cannon-es에서 angularVelocity·Y(잉글리시)는 펠트와의 동마찰로 �
 - 원 바깥 클릭 → 가장자리에 클램프.
 - 발사 후 자동 중심 리셋 확인.
 
+### 변경 요약
+- 신규: [src/js/ui/ImpactPicker.js](../../src/js/ui/ImpactPicker.js). pointerdown + window pointermove/up 패턴.
+- [src/css/style.css](../../src/css/style.css): `.impact-picker` 스타일 (radial gradient 큐볼 + 십자선 + 빨간 도트).
+- [src/js/main.js](../../src/js/main.js): ImpactPicker 인스턴스화. window.__demo에 노출.
+
+### 검증 결과 (자동)
+- topClick: y=+0.96, rightClick: x=+0.96, bottomLeft: (-0.71, -0.71) — 좌표계 정상.
+- 원 바깥 클릭: magnitude=1.0 정확히 (가장자리 클램프).
+- reset(): (0, 0) 복귀.
+
 ---
 
 ## Phase 9.2 — 스핀 물리 적용
