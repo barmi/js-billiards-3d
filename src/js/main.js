@@ -7,12 +7,12 @@ import { Table } from './objects/Table.js';
 import { Ball } from './objects/Ball.js';
 import { CueStick } from './objects/CueStick.js';
 import { rackPositions, headSpot } from './objects/rack.js';
+import { ShotController } from './controls/ShotController.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
 
 const stage = new Stage(app);
-// 카메라를 헤드 스팟 뒤쪽(-x)에서 풋 스팟 쪽(+x)을 바라보도록 — 자연스러운 브레이크 자세.
 stage.camera.position.set(-1.9, 1.05, 0.7);
 stage.camera.lookAt(0, 0, 0);
 stage.controls.target.set(0, 0, 0);
@@ -40,37 +40,66 @@ for (const spec of rackPositions()) {
   makeBall(spec.number, spec.x, spec.z);
 }
 
-// 큐 스틱.
 const cueStick = new CueStick();
 stage.add(cueStick.mesh);
 
 const _aimDir = new THREE.Vector3();
-function updateAim() {
-  if (cueBall.pocketed) {
-    cueStick.setVisible(false);
-    return;
-  }
-  if (!physics.isAllAtRest()) {
-    cueStick.setVisible(false);
-    return;
-  }
-  // 카메라가 큐볼을 향하도록 컨트롤 타겟 갱신.
-  stage.controls.target.set(cueBall.body.position.x, BALL.RADIUS, cueBall.body.position.z);
 
-  // 조준 방향 = (큐볼 - 카메라) 의 xz 정규화.
+function refreshAimDir() {
   _aimDir.set(
     cueBall.body.position.x - stage.camera.position.x,
     0,
     cueBall.body.position.z - stage.camera.position.z,
   );
-  if (_aimDir.lengthSq() < 1e-6) {
+  if (_aimDir.lengthSq() < 1e-6) return false;
+  _aimDir.normalize();
+  return true;
+}
+
+function canShoot() {
+  return !cueBall.pocketed && physics.isAllAtRest();
+}
+
+function updateAim() {
+  if (!canShoot()) {
     cueStick.setVisible(false);
     return;
   }
-  _aimDir.normalize();
+  stage.controls.target.set(cueBall.body.position.x, BALL.RADIUS, cueBall.body.position.z);
+  if (!refreshAimDir()) {
+    cueStick.setVisible(false);
+    return;
+  }
   cueStick.aim(cueBall.body.position, _aimDir);
   cueStick.setVisible(true);
 }
+
+// 파워 게이지 HUD.
+const powerPanel = document.createElement('div');
+powerPanel.className = 'power-gauge';
+powerPanel.innerHTML = '<div class="power-fill"></div><div class="power-label">SPACE</div>';
+hud.appendChild(powerPanel);
+const powerFill = powerPanel.querySelector('.power-fill');
+
+const SHOT_VELOCITY_MIN = 0.6;
+const SHOT_VELOCITY_MAX = 8.0;
+
+const shot = new ShotController({
+  canShoot,
+  getAimDir: () => _aimDir,
+  onCharge: (p) => {
+    powerFill.style.height = `${(p * 100).toFixed(1)}%`;
+    cueStick.pullback = p * 0.18; // 최대 18cm 풀백
+  },
+  onFire: (p) => {
+    if (!refreshAimDir()) return;
+    const v = SHOT_VELOCITY_MIN + (SHOT_VELOCITY_MAX - SHOT_VELOCITY_MIN) * p;
+    cueBall.body.wakeUp();
+    cueBall.body.velocity.set(_aimDir.x * v, 0, _aimDir.z * v);
+    cueStick.pullback = 0;
+  },
+});
+shot.attach(window);
 
 function handlePocketing() {
   for (const b of balls) {
@@ -88,20 +117,20 @@ function handlePocketing() {
 stage.onUpdate((dt) => {
   physics.step(dt);
   handlePocketing();
+  shot.update(dt);
   updateAim();
 });
 
 stage.start();
 
-// 디버그용 — 콘솔에서 cueBall.body.velocity.set(...)로 샷 테스트 가능.
-window.__demo = { cueBall, balls, physics, stage, cueStick };
+window.__demo = { cueBall, balls, physics, stage, cueStick, shot };
 
 const panel = document.createElement('div');
 panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 4 / Phase 4.1 — cue stick aiming</span><br />
-  <span style="opacity:.45">drag: rotate camera (aim) · wheel: zoom</span>
+  <span style="opacity:.65">Stage 4 / Phase 4.2 — power &amp; shot</span><br />
+  <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);

@@ -42,18 +42,31 @@
 
 ---
 
-## Phase 4.2 — 파워 게이지 + 샷 발사 (예정)
+## Phase 4.2 — 파워 게이지 + 샷 발사
 
-### 계획
-- 좌클릭 누름→떼기로 파워 충전 (0~max). HUD에 게이지 바.
-- 떼면 큐볼.body에 `velocity = aimDir * power` 적용 (또는 `applyImpulse`).
-- 큐 스틱이 발사 직전 약간 뒤로 당겨졌다가 앞으로 살짝 진행하는 애니메이션.
+### 결정사항
+- 입력: **스페이스바**로 차지/릴리스. OrbitControls 좌클릭 드래그와 충돌 없음.
+- 차지 속도: 1/1.5 per sec (1.5초에 풀파워). 0~1 normalized power.
+- 샷 속도 매핑: power 0→0.6 m/s, power 1→8.0 m/s 선형 보간.
+- 큐 스틱 풀백: power × 0.18 (최대 18cm 후퇴). 시각적 차지 표현.
+- 차지 중 공이 움직이기 시작하면(연속 입력 방어) 자동 취소.
+- HUD 우하단 220px 세로 게이지, green→yellow→red 그라데이션.
+- 구조: `src/js/controls/ShotController.js`에 인풋·차지 상태, main.js에서 콜백으로 시각화/발사 처리.
+
+### 변경 요약
+- 신규: [src/js/controls/ShotController.js](../../src/js/controls/ShotController.js).
+- [src/js/main.js](../../src/js/main.js): ShotController 인스턴스화, `onCharge`(게이지+풀백), `onFire`(`body.velocity.set(aim·v)`) 와이어업.
+- [src/css/style.css](../../src/css/style.css): `.power-gauge`, `.power-fill` 스타일.
+
+### 검증
+- 스페이스바 누름→차지(게이지 충전, 스틱 풀백) 동작.
+- 풀파워(power=1) 릴리스 시 큐볼 속도 8.0 m/s, 방향=조준 방향 일치 확인.
+- 콘솔 에러 없음.
 
 ---
 
-## Phase 4.3 — 스핀 (예정)
+## Phase 4.3 — 스핀 (잉글리시) — **연기 결정**
 
-### 계획
-- HUD에 작은 "큐볼 시점" 원 — 클릭 위치가 타격점.
-- 중심 = 무회전, 위 = 톱스핀, 아래 = 백스핀, 좌/우 = 잉글리시.
-- 샷 발사 시 적절한 `angularVelocity` 부여.
+스핀은 정확히 구현하려면 ball-cloth 마찰 모델과 측면 임팩트 포인트 매핑이 필요해 별도 작업. 기본 8볼 게임플레이엔 필수 아님. **Stage 7(폴리시)로 이연**하거나 별도 이터레이션으로 처리.
+
+→ **Stage 4 종료** (4.1, 4.2 완료, 4.3 이연). Stage 5 진입.

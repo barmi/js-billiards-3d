@@ -43,3 +43,37 @@ html, body {
   top: 12px;
   left: 12px;
 }
+
+#hud .power-gauge {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 22px;
+  height: 220px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(15, 18, 22, 0.55);
+  overflow: hidden;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+#hud .power-gauge .power-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0%;
+  background: linear-gradient(to top, #2ecc71 0%, #f1c40f 60%, #e74c3c 100%);
+  transition: height 0.04s linear;
+}
+
+#hud .power-gauge .power-label {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(230, 230, 230, 0.7);
+}
