@@ -1,42 +1,44 @@
 import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
 
-import { SCENE, CAMERA } from './config.js';
+import { Stage } from './scene/Stage.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(SCENE.BACKGROUND);
-app.appendChild(renderer.domElement);
+const stage = new Stage(app);
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  CAMERA.FOV,
-  window.innerWidth / window.innerHeight,
-  CAMERA.NEAR,
-  CAMERA.FAR,
+// 임시 바닥(회색 펠트 자리). Stage 3에서 실제 테이블 베드로 교체.
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(4, 4),
+  new THREE.MeshStandardMaterial({ color: 0x2c3640, roughness: 0.95, metalness: 0.0 }),
 );
-camera.position.set(0, 1.6, 2.4);
-camera.lookAt(0, 0, 0);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+stage.add(ground);
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+// 임시 큐브. Stage 2에서 물리 객체로 대체.
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(0.4, 0.4, 0.4),
+  new THREE.MeshStandardMaterial({ color: 0x4f8ef7, roughness: 0.4, metalness: 0.1 }),
+);
+cube.position.y = 0.2;
+cube.castShadow = true;
+cube.receiveShadow = true;
+stage.add(cube);
+
+stage.onUpdate((dt) => {
+  cube.rotation.y += dt * 0.6;
+  cube.rotation.x += dt * 0.25;
 });
 
-renderer.render(scene, camera);
+stage.start();
 
 const panel = document.createElement('div');
 panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
-  three.js r${THREE.REVISION} · cannon-es ${CANNON.Body ? 'loaded' : 'missing'}<br />
-  <span style="opacity:.6">Stage 1 / Phase 1.2 — scaffold</span>
+  three.js r${THREE.REVISION}<br />
+  <span style="opacity:.65">Stage 1 / Phase 1.3 — basic scene</span><br />
+  <span style="opacity:.45">drag: rotate · wheel: zoom</span>
 `;
 hud.appendChild(panel);
-
-console.log('[boot] three.js', THREE.REVISION, '· cannon-es loaded:', typeof CANNON.World === 'function');

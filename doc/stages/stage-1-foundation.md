@@ -51,11 +51,19 @@
 
 ## Phase 1.3 — 기본 3D 씬
 
-### 계획
-- 원근 카메라, 방향광 + 환경광, 그림자.
-- 임시 바닥(평면)과 큐브 1개로 정상 렌더 확인.
-- `OrbitControls`로 카메라 회전/줌 가능하게.
-- `requestAnimationFrame` 루프 + 리사이즈 핸들러.
+### 결정사항
+- 씬 인프라를 `Stage` 클래스로 분리 ([src/js/scene/Stage.js](../../src/js/scene/Stage.js)) — 카메라/렌더러/컨트롤/조명/애니메이션 루프를 한 인스턴스가 관리. 외부에서는 `add()`, `onUpdate()`, `start()`만 노출.
+- 조명은 `lighting.js`로 분리. 키 라이트 1개(그림자), 필 라이트 1개, 환경광. 그림자 카메라 frustum은 약 2m 범위(테이블이 들어갈 크기).
+- 렌더러: `PCFSoftShadowMap`, `ACESFilmicToneMapping`. WebGL2 기본.
+- OrbitControls: `enableDamping`, polar angle은 `0.49π` 미만으로 제한 (지표면 아래 시점 차단).
+- 매 프레임 dt는 `Math.min(actual, 0.1)`로 clamp — 탭 전환 후 큰 스파이크 방지.
 
-### 진입 조건
-- 브라우저에서 회전 가능한 3D 씬, 그림자가 떨어지는 큐브가 보여야 함. 이후 Stage 2에서 이 큐브를 물리 객체로 교체.
+### 변경 요약
+- 신규: [src/js/scene/Stage.js](../../src/js/scene/Stage.js), [src/js/scene/lighting.js](../../src/js/scene/lighting.js).
+- [src/js/main.js](../../src/js/main.js): `Stage` 사용으로 재작성. 임시 바닥 + 회전하는 파란 큐브 추가 (Stage 2에서 교체 예정).
+
+### 검증
+- 브라우저에서 회전하는 파란 큐브, 바닥에 부드러운 그림자, OrbitControls 드래그·줌 모두 동작.
+- 콘솔 에러 없음.
+
+→ **Stage 1 완료.** Stage 2 진입.
