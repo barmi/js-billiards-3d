@@ -110,15 +110,31 @@ WPA(World Pool-Billiard Association) 표준 9피트 풀 테이블 기준.
 ### Stage 7 — 마무리 및 배포 ✅
 - ✅ Phase 7.1: 최종 QA, README 완성, 정적 배포 검증
 
-## 6.5. 이연 항목 (향후 이터레이션)
+### Stage 8 — 핵심 버그 수정 ✅ (사용자 보고 대응)
+- ✅ Phase 8.1: 공 터널링/쿠션 관통 수정 (CCD + 두꺼운 콜라이더 + 1/240 timestep + 안전망)
+- ✅ Phase 8.2: 샷 후 즉응성 (각속도 임계 분리, 댐핑·스냅 강화, 정지 5.08s → 2.80s)
 
-- 스핀(잉글리시) 입력 + 공 회전 처리
-- 탑뷰 카메라 토글
-- 공 번호 텍스처
-- 사운드 효과
-- Ball-in-hand 자유 배치
-- 모바일 터치 컨트롤
+### Stage 9 — 타격점 + 스핀 물리 ✅
+- ✅ Phase 9.1: 타격점 UI 위젯 (큐볼 단면 클릭/드래그)
+- ✅ Phase 9.2: 스핀 → 각속도 적용 (톱/백/사이드, 검증: topSpin은 follow, backSpin은 draw)
+
+### Stage 10 — 사운드 ✅
+- ✅ Phase 10.1: Web Audio 절차적 합성 4종 (ball-ball/cushion/pocket/cue-impact) + 이벤트 와이어업
+
+### Stage 11 — 남은 UI/UX ✅
+- ✅ Phase 11.1: 탑뷰 카메라 토글 ('V')
+- ✅ Phase 11.2: Ball-in-hand 자유 배치 (마우스 raycast, 다른 공과 충돌 검사)
+- ✅ Phase 11.3: 공 번호 절차적 텍스처 (CanvasTexture, 솔리드/스트라이프/8볼/큐볼)
+
+### Stage 12 — 종단 QA ✅
+- ✅ Phase 12.1: 16공 텍스처, 4종 사운드, 카메라 토글, ball-in-hand 모두 정상 검증.
+  PCFSoftShadowMap → PCFShadowMap 마이그레이션.
+
+## 6.5. 남은 이연 항목 (향후 이터레이션)
+
+- 모바일 터치 컨트롤 (현재 OrbitControls + 키보드 차지 = 데스크톱 최적)
 - 단일 플레이용 AI
+- 큐 스틱이 타격점 오프셋을 시각적으로 반영 (현재는 항상 중심을 가리킴)
 
 ## 6. 작업 원칙
 
