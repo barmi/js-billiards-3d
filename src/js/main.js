@@ -192,7 +192,6 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 6 / Phase 6.1 — aim assist</span><br />
   <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);
