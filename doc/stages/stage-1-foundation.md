@@ -29,14 +29,23 @@
 
 ## Phase 1.2 — HTML/CSS/JS 스캐폴드 + three.js 로드
 
-### 계획
-- `src/index.html`: importmap 정의, 캔버스 컨테이너, CSS·JS 링크.
-- `src/css/style.css`: 풀스크린 캔버스, 기본 리셋.
-- `src/js/main.js`: 진입점. three.js 임포트 확인용 최소 코드 (장면, 카메라, 렌더러 인스턴스만 생성하고 렌더링).
-- `src/js/config.js`: 첫 상수 (테이블·공 치수) 정의.
+### 결정사항
+- three.js **r184**, cannon-es **0.20.0** 핀. importmap을 통해 unpkg에서 직접 ESM 로드.
+- 정적 서버는 `python3 -m http.server 8080 --directory src` 사용 (의존성 없음). `.claude/launch.json`에 등록.
+- HUD는 별도 DOM 레이어(`#hud`)로 분리 — 캔버스와 독립적으로 패널을 띄움.
 
-### 진입 조건
-- 정적 서버 띄우고 브라우저에서 검은 캔버스가 풀스크린으로 표시되어야 함 (three.js import 성공 증명).
+### 변경 요약
+- [src/index.html](../../src/index.html): importmap (three / three/addons / cannon-es), `#app`, `#hud` 컨테이너.
+- [src/css/style.css](../../src/css/style.css): 풀스크린 리셋, HUD 패널 스타일.
+- [src/js/config.js](../../src/js/config.js): WPA 9피트 풀 테이블·공 상수, 물리/렌더 파라미터.
+- [src/js/main.js](../../src/js/main.js): three.js·cannon-es import, 렌더러/씬/카메라 생성, 단일 프레임 렌더 + 리사이즈, 버전 표시 HUD.
+- [.claude/launch.json](../../.claude/launch.json): 로컬 정적 서버 설정.
+
+### 검증
+- 브라우저 콘솔: `[boot] three.js 184 · cannon-es loaded: true`.
+- HUD에 버전 패널 표시, 캔버스가 `SCENE.BACKGROUND` 색으로 채워짐.
+
+→ Phase 1.3 진입 가능.
 
 ---
 
