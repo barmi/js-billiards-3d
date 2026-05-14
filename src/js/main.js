@@ -45,7 +45,7 @@ for (const spec of rackPositions()) {
 const cueStick = new CueStick();
 stage.add(cueStick.mesh);
 
-const gameHUD = new GameHUD(hud);
+const gameHUD = new GameHUD(hud, { onNewGame: () => location.reload() });
 
 function respawnCueBall() {
   const hs = headSpot();
@@ -180,7 +180,7 @@ panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 5 / Phase 5.2 — groups &amp; legal shot</span><br />
+  <span style="opacity:.65">Stage 5 / Phase 5.3 — 8-ball win/loss</span><br />
   <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);

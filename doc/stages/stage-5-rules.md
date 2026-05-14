@@ -73,9 +73,31 @@
 
 ---
 
-## Phase 5.3 — 8볼 처리, 파울 후속 (예정)
+## Phase 5.3 — 8볼 승리/패배 + 게임 종료
 
-### 계획
-- 8볼 조기 포켓: 패배.
-- 모든 그룹 클리어 후 8볼 합법적 포켓: 승리.
-- 파울 후 상대가 ball-in-hand (간단히: 헤드 스팟 재배치 또는 자유 배치).
+### 결정사항
+- `_hadClearedAtStart`: 샷 시작 시점에 자기 그룹 클리어 여부 스냅샷. 이게 8볼 적법 타격의 기준.
+- 그룹 클리어 후: 8볼을 먼저 쳐야 함. 다른 공 먼저 치면 `must hit 8 first` 파울.
+- 8볼 포켓 결과:
+  - `_hadClearedAtStart === true && !foul` → 슈터 승
+  - 그 외(미클리어, 스크래치 동반, 그룹 외 공을 먼저 치고 8 포켓 등) → 슈터 패
+- 브레이크 샷에서 8볼 포켓도 패로 처리(open table이지만 그룹 미클리어 상태). BCA의 re-rack 옵션은 단순화로 생략.
+- ball-in-hand: 스크래치 시 헤드 스팟 재배치(기존 5.1 유지). 다른 파울에서는 큐볼이 멈춘 자리에서 다음 샷 — 캐주얼 룰.
+- 게임 종료: `state = GAME_OVER`. HUD 위에 풀스크린 반투명 오버레이 + Game Over 카드 + New Game 버튼. New Game = `location.reload()`로 깨끗한 재시작.
+
+### 변경 요약
+- [src/js/game/Game.js](../../src/js/game/Game.js):
+  - `winner`, `_hadClearedAtStart` 추가
+  - `_hasClearedGroup(player)` 헬퍼
+  - resolveShot에 8볼 적법 타격 + 승/패 판정 + GAME_OVER 전이
+  - summary에 `eightPocketed`, `winner` 필드 포함
+- [src/js/ui/GameHUD.js](../../src/js/ui/GameHUD.js): Game Over 오버레이 + New Game 버튼.
+- [src/js/main.js](../../src/js/main.js): GameHUD 생성 시 `onNewGame: () => location.reload()`.
+- [src/css/style.css](../../src/css/style.css): `.game-over-overlay`, `.new-game-btn` 스타일.
+
+### 검증 (시뮬레이션)
+- 브레이크에서 ball 8 포켓 → state=GAME_OVER, winner=P2 (P1이 8볼을 그룹 클리어 전 포켓 = 패).
+- 오버레이 표시(Game Over / Player 2 wins / New Game) 확인.
+- `location.reload()`로 게임 리셋 가능.
+
+→ **Stage 5 완료.** Stage 6(UI/UX) 진입.

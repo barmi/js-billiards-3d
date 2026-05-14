@@ -34,12 +34,15 @@ export class Game {
     // 미할당이면 null. 한 명이 할당되면 다른 한 명도 자동으로 반대 그룹.
     this.playerGroups = { 1: null, 2: null };
 
+    this.winner = null;
+
     this._isFirstShotEver = true;
     this._currentShotIsBreak = false;
     this._shotPocketed = [];
     this._shotCueScratched = false;
     this._shotFirstContact = null;     // 큐볼이 처음 친 객체구
     this._railHitAfterContact = false; // 첫 콘택트 후 어떤 공이 쿠션에 닿았는가
+    this._hadClearedAtStart = false;   // 샷 시작 시점에 자기 그룹을 다 비웠는가
   }
 
   isPlayable() {
@@ -55,8 +58,21 @@ export class Game {
     this._shotFirstContact = null;
     this._railHitAfterContact = false;
     this._currentShotIsBreak = this._isFirstShotEver;
+    this._hadClearedAtStart = this._hasClearedGroup(this.currentPlayer);
     this._isFirstShotEver = false;
     this.state = GameState.SHOT_IN_PROGRESS;
+  }
+
+  // 현재 시점에 player가 자기 그룹의 객체구를 모두 포켓했는가.
+  _hasClearedGroup(player) {
+    const g = this.playerGroups[player];
+    if (!g) return false;
+    return !this.balls.some((b) => {
+      if (b === this.cueBall) return false;
+      if (b.pocketed) return false;
+      if (b.number === 8) return false;
+      return this._groupKey(b) === g;
+    });
   }
 
   onBallPocketed(ball) {
@@ -124,9 +140,14 @@ export class Game {
         const hitKey = this._groupKey(this._shotFirstContact);
         const hitEight = this._shotFirstContact.number === 8;
         if (myGroup) {
-          // 그룹 할당됨: 자기 그룹 먼저 쳐야 함.
-          // 8볼 우선 타격은 5.3에서 자세히 처리 — 여기선 단순히 자기 그룹이 아닌 공 = 파울.
-          if (hitKey !== myGroup) fouls.push('wrong group');
+          // 그룹 할당됨.
+          if (this._hadClearedAtStart) {
+            // 그룹 클리어 상태 — 8볼을 먼저 쳐야 함.
+            if (!hitEight) fouls.push('must hit 8 first');
+          } else {
+            // 그룹 클리어 전 — 자기 그룹을 먼저 쳐야 함. 8볼 우선타격 금지.
+            if (hitKey !== myGroup) fouls.push('wrong group');
+          }
         } else {
           // open table: 8볼 먼저 치면 파울.
           if (hitEight) fouls.push('hit eight first');
@@ -160,29 +181,52 @@ export class Game {
       this.scores[this.currentPlayer].push(b.number);
     }
 
-    // 큐볼 재배치.
+    // 큐볼 재배치 (스크래치 시).
     if (this._shotCueScratched && this.hooks.onCueRespawn) {
       this.hooks.onCueRespawn();
     }
 
-    // 턴 유지/패스.
-    const legalPocketed = !foul && objectBalls.some((b) => b.number !== 8);
-    const turnPass = foul || !legalPocketed;
-    if (turnPass) {
-      this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+    // 8볼 처리 — 게임 종료 판정.
+    const eightPocketed = pocketed.some((b) => b.number === 8);
+    let gameEnded = false;
+    let winner = null;
+    if (eightPocketed) {
+      const shooter = this.currentPlayer;
+      const other = shooter === 1 ? 2 : 1;
+      // 합법: 샷 시작 시점에 그룹 클리어 + 무파울 → 슈터 승.
+      if (this._hadClearedAtStart && !foul) {
+        winner = shooter;
+      } else {
+        // 그룹 미클리어 OR 파울(스크래치 등) → 슈터 패.
+        winner = other;
+      }
+      this.winner = winner;
+      this.state = GameState.GAME_OVER;
+      gameEnded = true;
     }
 
-    this.state = GameState.WAITING_FOR_SHOT;
+    // 턴 유지/패스 (게임 종료가 아닐 때).
+    let turnPass = false;
+    if (!gameEnded) {
+      const legalPocketed = !foul && objectBalls.some((b) => b.number !== 8);
+      turnPass = foul || !legalPocketed;
+      if (turnPass) {
+        this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+      }
+      this.state = GameState.WAITING_FOR_SHOT;
+    }
 
     const summary = {
       wasBreak,
       pocketed: objectBalls.map((b) => b.number),
+      eightPocketed,
       firstContact: this._shotFirstContact ? this._shotFirstContact.number : null,
       cueScratched: this._shotCueScratched,
       railAfterContact: this._railHitAfterContact,
       foul,
       fouls,
       turnPassed: turnPass,
+      winner,
     };
     if (this.hooks.onResolve) this.hooks.onResolve(this, summary);
   }

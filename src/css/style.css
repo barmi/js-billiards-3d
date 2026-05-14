@@ -146,3 +146,52 @@ html, body {
   font-size: 11px;
   color: rgba(255, 220, 180, 0.85);
 }
+
+#hud .game-over-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: auto;
+  backdrop-filter: blur(3px);
+}
+
+#hud .game-over-overlay .game-over-card {
+  background: #181c20;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 24px 32px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+#hud .game-over-overlay .title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f6f3ec;
+}
+
+#hud .game-over-overlay .winner-line {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #e7c75c;
+}
+
+#hud .game-over-overlay .new-game-btn {
+  margin-top: 14px;
+  padding: 7px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 6px;
+  background: rgba(78, 158, 255, 0.18);
+  color: #d6e7ff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#hud .game-over-overlay .new-game-btn:hover {
+  background: rgba(78, 158, 255, 0.32);
+}
