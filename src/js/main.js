@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { BALL } from './config.js';
+import { BALL, PHYSICS } from './config.js';
 import { Stage } from './scene/Stage.js';
 import { PhysicsWorld } from './physics/PhysicsWorld.js';
 import { Table } from './objects/Table.js';
@@ -162,24 +162,40 @@ function handlePocketing() {
         b.body.position.set(0, -2, 0);
         b.body.velocity.set(0, 0, 0);
         b.body.sleep();
-      }, 350);
+      }, 80);
     } else {
       setTimeout(() => {
         physics.remove(b.body);
         stage.remove(b.mesh);
-      }, 350);
+      }, 80);
     }
   }
 }
 
+let _shotElapsed = 0;
 stage.onUpdate((dt) => {
   physics.step(dt);
   handlePocketing();
   shot.update(dt);
   updateAim();
-  // 샷 중이고 모든 공이 정지 → 샷 정리.
-  if (game.state === GameState.SHOT_IN_PROGRESS && physics.isAllAtRest()) {
-    game.resolveShot();
+  // 샷 중: 정상 정지 시 또는 안전 타임아웃 시 resolve.
+  if (game.state === GameState.SHOT_IN_PROGRESS) {
+    _shotElapsed += dt;
+    const atRest = physics.isAllAtRest();
+    if (atRest || _shotElapsed > PHYSICS.SHOT_SAFETY_TIMEOUT) {
+      if (!atRest) {
+        // 강제 정지: 모든 동적 바디 속도 0으로
+        for (const { body } of physics._dynamic) {
+          body.velocity.set(0, 0, 0);
+          body.angularVelocity.set(0, 0, 0);
+          body.sleep();
+        }
+      }
+      game.resolveShot();
+      _shotElapsed = 0;
+    }
+  } else {
+    _shotElapsed = 0;
   }
 });
 

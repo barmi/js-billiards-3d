@@ -73,4 +73,24 @@
 ### 검증 계획
 - 풀파워 브레이크 후 모든 공이 정지하기까지 시간 측정 (목표 ≤ 4초).
 - 포켓당 시각적 위화감(공이 사라지는 동작) 검증.
-- 5초 안전 타임아웃이 정상 케이스에서 발동하지 않는지 확인.
+- 안전 타임아웃이 정상 케이스에서 발동하지 않는지 확인.
+
+### 변경 요약
+- [src/js/config.js](../../src/js/config.js):
+  - `REST_ANGULAR=1.0`, `REST_SNAP_ANGULAR=2.0` 추가 (각속도 임계 분리)
+  - `REST_SNAP_VELOCITY=0.15`, `BALL_LINEAR_DAMPING=0.70`, `BALL_ANGULAR_DAMPING=0.70`
+  - `SHOT_SAFETY_TIMEOUT=4.0`
+- [src/js/objects/Ball.js](../../src/js/objects/Ball.js): config 댐핑 값 사용, `sleepTimeLimit=0.25` (빠른 sleep).
+- [src/js/physics/PhysicsWorld.js](../../src/js/physics/PhysicsWorld.js):
+  - `step()`에 스냅 로직 — v² < snapV² && ω² < snapW² 면 v=ω=0 + sleep
+  - `isAllAtRest()`에 각속도 임계 분리 적용
+- [src/js/main.js](../../src/js/main.js):
+  - 포켓 sink 후 제거 setTimeout 350ms → 80ms
+  - SHOT_SAFETY_TIMEOUT 초과 시 강제 정지 후 resolveShot
+
+### 검증 결과 (자동)
+- 풀파워 8 m/s 브레이크 후 정지 시간: **5.08s → 2.80s** (각속도 임계 추가가 결정적)
+- 안전 타임아웃 4초 안에 자연 정지 ✓
+- 포켓된 공 즉시 제거 (80ms 짧은 가라앉음 애니 후)
+
+→ **Stage 8 완료.** Stage 9(스핀/타격점) 진입.

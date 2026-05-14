@@ -60,18 +60,30 @@ export class PhysicsWorld {
 
   step(dt) {
     this.world.step(PHYSICS.TIMESTEP, dt, PHYSICS.MAX_SUBSTEPS);
+    const snapV2 = PHYSICS.REST_SNAP_VELOCITY * PHYSICS.REST_SNAP_VELOCITY;
+    const snapW2 = PHYSICS.REST_SNAP_ANGULAR * PHYSICS.REST_SNAP_ANGULAR;
     for (const { body, mesh } of this._dynamic) {
+      // 잔류 운동 컷: 매우 느리면 즉시 정지·sleep.
+      if (body.sleepState !== CANNON.Body.SLEEPING &&
+          body.velocity.lengthSquared() < snapV2 &&
+          body.angularVelocity.lengthSquared() < snapW2) {
+        body.velocity.set(0, 0, 0);
+        body.angularVelocity.set(0, 0, 0);
+        body.sleep();
+      }
       mesh.position.copy(body.position);
       mesh.quaternion.copy(body.quaternion);
     }
   }
 
-  // 모든 동적 바디가 사실상 정지했는지 (속도가 REST_VELOCITY 미만).
+  // 모든 동적 바디가 사실상 정지했는지.
   isAllAtRest() {
+    const vMax2 = PHYSICS.REST_VELOCITY * PHYSICS.REST_VELOCITY;
+    const wMax2 = PHYSICS.REST_ANGULAR * PHYSICS.REST_ANGULAR;
     for (const { body } of this._dynamic) {
       if (body.sleepState !== CANNON.Body.SLEEPING) {
-        if (body.velocity.lengthSquared() > PHYSICS.REST_VELOCITY ** 2) return false;
-        if (body.angularVelocity.lengthSquared() > PHYSICS.REST_VELOCITY ** 2) return false;
+        if (body.velocity.lengthSquared() > vMax2) return false;
+        if (body.angularVelocity.lengthSquared() > wMax2) return false;
       }
     }
     return true;

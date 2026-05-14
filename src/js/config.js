@@ -32,11 +32,17 @@ export const PHYSICS = {
   FELT_FRICTION: 0.2,
   CUSHION_RESTITUTION: 0.85,
   BALL_RESTITUTION: 0.95,
-  REST_VELOCITY: 0.03,        // 정지 판정 임계 (m/s). 너무 낮으면 잔류 운동에 오래 기다림.
+  REST_VELOCITY: 0.03,         // 정지 판정 임계 (m/s).
+  REST_ANGULAR: 1.0,           // 각속도 정지 판정 (rad/s).
+  REST_SNAP_VELOCITY: 0.15,    // 이 미만이면 강제 v=0 + sleep (잔류 운동 컷).
+  REST_SNAP_ANGULAR: 2.0,      // 이 미만이면 강제 ω=0 + sleep.
+  BALL_LINEAR_DAMPING: 0.70,
+  BALL_ANGULAR_DAMPING: 0.70,
   // 콜라이더 두께(외측 방향) — 시각 메시는 CUSHION_DEPTH 그대로, 콜라이더만 두껍게.
   CUSHION_COLLIDER_DEPTH: 0.30,
-  // cannon-es CCD 파라미터.
   CCD_SPEED_THRESHOLD: 0.5,
+  // 샷 해결 안전 타임아웃 (s). 자연 정지가 안 끝나면 강제 resolve.
+  SHOT_SAFETY_TIMEOUT: 4.0,
 };
 
 export const SCENE = {

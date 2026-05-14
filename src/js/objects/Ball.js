@@ -65,11 +65,11 @@ export class Ball {
       shape: new CANNON.Sphere(BALL.RADIUS),
       material: materials.ball,
       position: new CANNON.Vec3(position.x, BALL.RADIUS, position.z),
-      linearDamping: 0.35,
-      angularDamping: 0.35,
+      linearDamping: PHYSICS.BALL_LINEAR_DAMPING,
+      angularDamping: PHYSICS.BALL_ANGULAR_DAMPING,
       allowSleep: true,
-      sleepSpeedLimit: 0.02,
-      sleepTimeLimit: 0.4,
+      sleepSpeedLimit: PHYSICS.REST_VELOCITY,
+      sleepTimeLimit: 0.25,
     });
     // CCD: 빠른 공이 쿠션을 뚫고 나가지 않게.
     this.body.ccdSpeedThreshold = PHYSICS.CCD_SPEED_THRESHOLD;
