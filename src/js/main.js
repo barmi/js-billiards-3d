@@ -8,6 +8,8 @@ import { Ball } from './objects/Ball.js';
 import { CueStick } from './objects/CueStick.js';
 import { rackPositions, headSpot } from './objects/rack.js';
 import { ShotController } from './controls/ShotController.js';
+import { Game, GameState } from './game/Game.js';
+import { GameHUD } from './ui/GameHUD.js';
 
 const app = document.getElementById('app');
 const hud = document.getElementById('hud');
@@ -43,6 +45,28 @@ for (const spec of rackPositions()) {
 const cueStick = new CueStick();
 stage.add(cueStick.mesh);
 
+const gameHUD = new GameHUD(hud);
+
+function respawnCueBall() {
+  const hs = headSpot();
+  cueBall.pocketed = false;
+  cueBall.mesh.visible = true;
+  cueBall.body.position.set(hs.x, BALL.RADIUS, hs.z);
+  cueBall.body.velocity.set(0, 0, 0);
+  cueBall.body.angularVelocity.set(0, 0, 0);
+  cueBall.body.wakeUp();
+}
+
+const game = new Game({
+  cueBall,
+  balls,
+  hooks: {
+    onCueRespawn: respawnCueBall,
+    onResolve: (g) => gameHUD.update(g),
+  },
+});
+gameHUD.update(game);
+
 const _aimDir = new THREE.Vector3();
 
 function refreshAimDir() {
@@ -57,7 +81,9 @@ function refreshAimDir() {
 }
 
 function canShoot() {
-  return !cueBall.pocketed && physics.isAllAtRest();
+  if (cueBall.pocketed) return false;
+  if (!game.isPlayable()) return false;
+  return physics.isAllAtRest();
 }
 
 function updateAim() {
@@ -89,7 +115,7 @@ const shot = new ShotController({
   getAimDir: () => _aimDir,
   onCharge: (p) => {
     powerFill.style.height = `${(p * 100).toFixed(1)}%`;
-    cueStick.pullback = p * 0.18; // 최대 18cm 풀백
+    cueStick.pullback = p * 0.18;
   },
   onFire: (p) => {
     if (!refreshAimDir()) return;
@@ -97,6 +123,7 @@ const shot = new ShotController({
     cueBall.body.wakeUp();
     cueBall.body.velocity.set(_aimDir.x * v, 0, _aimDir.z * v);
     cueStick.pullback = 0;
+    game.onShotFired();
   },
 });
 shot.attach(window);
@@ -104,8 +131,18 @@ shot.attach(window);
 function handlePocketing() {
   for (const b of balls) {
     if (b.pocketed) continue;
-    if (table.isInPocket(b.body.position)) {
-      b.sink();
+    if (!table.isInPocket(b.body.position)) continue;
+    b.sink();
+    game.onBallPocketed(b);
+    if (b === cueBall) {
+      // 큐볼은 제거하지 않고 화면 아래로 격리. resolve 시 헤드 스팟에 재배치.
+      setTimeout(() => {
+        b.mesh.visible = false;
+        b.body.position.set(0, -2, 0);
+        b.body.velocity.set(0, 0, 0);
+        b.body.sleep();
+      }, 350);
+    } else {
       setTimeout(() => {
         physics.remove(b.body);
         stage.remove(b.mesh);
@@ -119,18 +156,22 @@ stage.onUpdate((dt) => {
   handlePocketing();
   shot.update(dt);
   updateAim();
+  // 샷 중이고 모든 공이 정지 → 샷 정리.
+  if (game.state === GameState.SHOT_IN_PROGRESS && physics.isAllAtRest()) {
+    game.resolveShot();
+  }
 });
 
 stage.start();
 
-window.__demo = { cueBall, balls, physics, stage, cueStick, shot };
+window.__demo = { cueBall, balls, physics, stage, cueStick, shot, game };
 
 const panel = document.createElement('div');
 panel.className = 'panel top-left';
 panel.innerHTML = `
   <strong>3D Billiards</strong><br />
   three.js r${THREE.REVISION} · cannon-es<br />
-  <span style="opacity:.65">Stage 4 / Phase 4.2 — power &amp; shot</span><br />
+  <span style="opacity:.65">Stage 5 / Phase 5.1 — turns &amp; scratch</span><br />
   <span style="opacity:.45">drag: aim · wheel: zoom · hold SPACE: power</span>
 `;
 hud.appendChild(panel);
