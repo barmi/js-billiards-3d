@@ -38,30 +38,36 @@ export function makeBallTexture(number) {
     ctx.fillStyle = STRIPE_WHITE;
     ctx.fillRect(0, 0, W, H);
   } else if (number > 8) {
-    // 스트라이프: 적도 부근만 흰색, 양 극 색.
+    // 스트라이프: 양 극이 흰색, 적도 부근에 색 띠. (Aramith/표준 9-15번 형태)
     ctx.fillStyle = STRIPE_WHITE;
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = color;
-    const bandH = Math.floor(H * 0.28);
-    ctx.fillRect(0, 0, W, bandH);                  // 북극 영역
-    ctx.fillRect(0, H - bandH, W, bandH);          // 남극 영역
+    const bandStart = Math.floor(H * 0.30);
+    const bandEnd = Math.floor(H * 0.70);
+    ctx.fillRect(0, bandStart, W, bandEnd - bandStart);
   } else {
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, W, H);
   }
 
   // 번호 (큐볼 제외): u=0.25 와 u=0.75 두 위치에 번호. 어느 방향이든 한쪽이 보임.
+  // 기본 카메라 거리(~2.85m)에서 공이 화면상 작게 보이므로 패치를 충분히 크게.
   if (number > 0) {
     const drawNumberAt = (uPercent) => {
       const cx = W * uPercent;
       const cy = H * 0.5;
-      const r = Math.min(W, H) * 0.10;
+      const r = Math.min(W, H) * 0.18;
+      // 살짝 어두운 테두리 → 흰 공/스트라이프 배경 대비 강화.
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 1.08, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#1a1a1a';
-      ctx.font = `bold ${Math.floor(r * 1.20)}px system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = '#111111';
+      ctx.font = `900 ${Math.floor(r * 1.35)}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(number), cx, cy + r * 0.04);
